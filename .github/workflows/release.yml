@@ -5,7 +5,7 @@ on:
 
 jobs:
   build-and-release:
-    runs-on: windows-latest
+    runs-on: macos-latest
     
     steps:
       - uses: actions/checkout@v3
@@ -48,6 +48,15 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-windows-build-
       
+      # Cache iOS Build
+      - name: Cache iOS Build
+        uses: actions/cache@v3
+        with:
+          path: build/ios
+          key: ${{ runner.os }}-ios-build-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-ios-build-
+      
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
@@ -68,6 +77,13 @@ jobs:
       
       - name: Install dependencies
         run: flutter pub get
+      
+      # Add after installing dependencies
+      - name: Install iOS dependencies
+        run: |
+          cd ios
+          pod install
+          cd ..
       
       # Build Web with cache
       - name: Cache Web Build
@@ -100,6 +116,16 @@ jobs:
       - name: Build Android APKs
         run: |
           flutter build apk --release --split-per-abi --target-platform android-arm64,android-arm,android-x64 --dart-define=Dart2jsOptimization=O4
+      
+      # Build iOS
+      - name: Build iOS
+        run: |
+          flutter build ios --release --no-codesign
+          cd build/ios/iphoneos
+          mkdir Payload
+          cp -r Runner.app Payload
+          zip -r ../../../ios-release.ipa Payload
+        continue-on-error: true
       
       # Create Release
       - name: Create Release
@@ -168,3 +194,15 @@ jobs:
           asset_path: web-release.zip
           asset_name: web-release.zip
           asset_content_type: application/zip
+      
+      # Upload iOS IPA
+      - name: Upload iOS IPA
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ios-release.ipa
+          asset_name: ios-release.ipa
+          asset_content_type: application/octet-stream
+        continue-on-error: true
