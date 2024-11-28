@@ -4,9 +4,8 @@ on:
     branches: [ main ]
 
 jobs:
-  build-and-release:
+  build-and-release-macos:
     runs-on: macos-latest
-    
     steps:
       - uses: actions/checkout@v3
       
@@ -39,15 +38,6 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-android-build-
       
-      # Cache Windows Build
-      - name: Cache Windows Build
-        uses: actions/cache@v3
-        with:
-          path: build/windows
-          key: ${{ runner.os }}-windows-build-${{ github.sha }}
-          restore-keys: |
-            ${{ runner.os }}-windows-build-
-      
       # Cache iOS Build
       - name: Cache iOS Build
         uses: actions/cache@v3
@@ -64,47 +54,23 @@ jobs:
           channel: 'stable'
           cache: true
       
-      # Cache pub dependencies
-      - name: Cache Pub Dependencies
-        uses: actions/cache@v3
-        with:
-          path: |
-            ${{ env.PUB_CACHE }}
-            .dart_tool
-          key: ${{ runner.os }}-pub-${{ hashFiles('**/pubspec.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-pub-
-      
       - name: Install dependencies
         run: flutter pub get
       
-      # Add after installing dependencies
       - name: Install iOS dependencies
         run: |
           cd ios
           pod install
           cd ..
       
-      # Build Web with cache
+      # Build Web
       - name: Build Web
         run: |
           flutter build web --release --no-tree-shake-icons
           cd build/web
           7z a -tzip ../../web-release.zip ./*
       
-      # Build Windows
-      - name: Build Windows
-        run: |
-          flutter config --enable-windows-desktop
-          flutter build windows --release
-          
-      - name: Create Windows ZIP
-        run: |
-          cd build/windows/x64/runner/Release
-          7z a -tzip ../../../../../windows-release.zip ./*
-        continue-on-error: true
-      
-      # Build Android with optimization flags
+      # Build Android
       - name: Build Android APKs
         run: |
           flutter build apk --release --split-per-abi --target-platform android-arm64,android-arm,android-x64 --dart-define=Dart2jsOptimization=O4
@@ -131,7 +97,7 @@ jobs:
           draft: false
           prerelease: false
       
-      # Upload Android APK - arm64-v8a
+      # Upload all assets except Windows
       - name: Upload Android APK (arm64-v8a)
         uses: actions/upload-release-asset@v1
         env:
@@ -142,7 +108,6 @@ jobs:
           asset_name: app-arm64-v8a-release.apk
           asset_content_type: application/vnd.android.package-archive
 
-      # Upload Android APK - armeabi-v7a
       - name: Upload Android APK (armeabi-v7a)
         uses: actions/upload-release-asset@v1
         env:
@@ -153,7 +118,6 @@ jobs:
           asset_name: app-armeabi-v7a-release.apk
           asset_content_type: application/vnd.android.package-archive
 
-      # Upload Android APK - x86_64
       - name: Upload Android APK (x86_64)
         uses: actions/upload-release-asset@v1
         env:
@@ -164,19 +128,6 @@ jobs:
           asset_name: app-x86_64-release.apk
           asset_content_type: application/vnd.android.package-archive
       
-      # Upload Windows ZIP
-      - name: Upload Windows ZIP
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: windows-release.zip
-          asset_name: windows-release.zip
-          asset_content_type: application/zip
-        continue-on-error: true
-      
-      # Upload Web ZIP
       - name: Upload Web ZIP
         uses: actions/upload-release-asset@v1
         env:
@@ -187,7 +138,6 @@ jobs:
           asset_name: web-release.zip
           asset_content_type: application/zip
       
-      # Upload iOS IPA
       - name: Upload iOS IPA
         uses: actions/upload-release-asset@v1
         env:
@@ -198,3 +148,41 @@ jobs:
           asset_name: ios-release.ipa
           asset_content_type: application/octet-stream
         continue-on-error: true
+
+  build-and-release-windows:
+    needs: build-and-release-macos
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.24.3'
+          channel: 'stable'
+          cache: true
+      
+      - name: Install dependencies
+        run: flutter pub get
+      
+      # Build Windows
+      - name: Build Windows
+        run: |
+          flutter config --enable-windows-desktop
+          flutter build windows --release
+          
+      - name: Create Windows ZIP
+        run: |
+          cd build/windows/x64/runner/Release
+          7z a -tzip ../../../../../windows-release.zip ./*
+      
+      # Upload Windows ZIP
+      - name: Upload Windows ZIP
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.TOKEN }}
+        with:
+          upload_url: ${{ needs.build-and-release-macos.outputs.upload_url }}
+          asset_path: windows-release.zip
+          asset_name: windows-release.zip
+          asset_content_type: application/zip
