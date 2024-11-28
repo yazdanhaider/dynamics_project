@@ -1,0 +1,170 @@
+name: Release
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  build-and-release:
+    runs-on: windows-latest
+    
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Setup Java
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'zulu'
+          java-version: '18'
+          cache: 'gradle'
+      
+      # Cache Gradle Dependencies
+      - name: Cache Gradle Dependencies
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-${{ hashFiles('*/.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
+      
+      # Cache Android Build
+      - name: Cache Android Build
+        uses: actions/cache@v3
+        with:
+          path: |
+            build/app/outputs
+            build/android
+          key: ${{ runner.os }}-android-build-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-android-build-
+      
+      # Cache Windows Build
+      - name: Cache Windows Build
+        uses: actions/cache@v3
+        with:
+          path: build/windows
+          key: ${{ runner.os }}-windows-build-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-windows-build-
+      
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.24.3'
+          channel: 'stable'
+          cache: true
+      
+      # Cache pub dependencies
+      - name: Cache Pub Dependencies
+        uses: actions/cache@v3
+        with:
+          path: |
+            ${{ env.PUB_CACHE }}
+            .dart_tool
+          key: ${{ runner.os }}-pub-${{ hashFiles('**/pubspec.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-pub-
+      
+      - name: Install dependencies
+        run: flutter pub get
+      
+      # Build Web with cache
+      - name: Cache Web Build
+        uses: actions/cache@v3
+        with:
+          path: build/web
+          key: ${{ runner.os }}-web-build-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-web-build-
+      
+      - name: Build Web
+        run: |
+          flutter build web --release
+          cd build/web
+          7z a -tzip ../../web-release.zip ./*
+      
+      # Build Windows
+      - name: Build Windows
+        run: |
+          flutter config --enable-windows-desktop
+          flutter build windows --release
+          
+      - name: Create Windows ZIP
+        run: |
+          cd build/windows/x64/runner/Release
+          7z a -tzip ../../../../../windows-release.zip ./*
+        continue-on-error: true
+      
+      # Build Android with optimization flags
+      - name: Build Android APKs
+        run: |
+          flutter build apk --release --split-per-abi --target-platform android-arm64,android-arm,android-x64 --dart-define=Dart2jsOptimization=O4
+      
+      # Create Release
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.TOKEN }}
+        with:
+          tag_name: v${{ github.run_number }}
+          release_name: Release v0.${{ github.run_number }}
+          draft: false
+          prerelease: false
+      
+      # Upload Android APK - arm64-v8a
+      - name: Upload Android APK (arm64-v8a)
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: build/app/outputs/flutter-apk/app-arm64-v8a-release.apk
+          asset_name: app-arm64-v8a-release.apk
+          asset_content_type: application/vnd.android.package-archive
+
+      # Upload Android APK - armeabi-v7a
+      - name: Upload Android APK (armeabi-v7a)
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: build/app/outputs/flutter-apk/app-armeabi-v7a-release.apk
+          asset_name: app-armeabi-v7a-release.apk
+          asset_content_type: application/vnd.android.package-archive
+
+      # Upload Android APK - x86_64
+      - name: Upload Android APK (x86_64)
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: build/app/outputs/flutter-apk/app-x86_64-release.apk
+          asset_name: app-x86_64-release.apk
+          asset_content_type: application/vnd.android.package-archive
+      
+      # Upload Windows ZIP
+      - name: Upload Windows ZIP
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: windows-release.zip
+          asset_name: windows-release.zip
+          asset_content_type: application/zip
+        continue-on-error: true
+      
+      # Upload Web ZIP
+      - name: Upload Web ZIP
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: web-release.zip
+          asset_name: web-release.zip
+          asset_content_type: application/zip
