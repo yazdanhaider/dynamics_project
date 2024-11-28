@@ -29,9 +29,9 @@ assignment yazdan haider 21bce10015
 ## Code Structure
 
 - `lib/`: Contains the main codebase.
-  - `controllers/`: Data models for stock information.
-  - `data/`: UI screens for different parts of the app.
-  - `themes/`: API services and data fetching logic.
-  - `ui/`: Onboarding screen implementation.
-  - `screens/`: Onboarding screen implementation.
+  - `controllers/`: Business logic, state management
+  - `data/`: Data models, API services, repositories
+  - `themes/`: App themes, colors, styles
+  - `ui/`: Reusable widgets, common UI components
+  - `screens/`: App screens/pages
   - `main.dart`: Entry point of the application.
