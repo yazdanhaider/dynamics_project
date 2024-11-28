@@ -2,7 +2,7 @@
 
 assignment yazdan haider 21bce10015
 <div align="center">
-<img src="https://readme-typing-svg.herokuapp.com?color=9370DB&size=50&width=600&height=80&lines=Assignment-21BCE10015"/>
+<img src="https://readme-typing-svg.herokuapp.com?color=9370DB&size=50&width=850&height=80&lines=Assignment-Neura-Dynamics"/>
 </div>
 
 ![1](https://github.com/user-attachments/assets/fd89963f-c301-4068-89c8-0e47bc9ed14b)
