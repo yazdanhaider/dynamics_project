@@ -86,17 +86,9 @@ jobs:
           cd ..
       
       # Build Web with cache
-      - name: Cache Web Build
-        uses: actions/cache@v3
-        with:
-          path: build/web
-          key: ${{ runner.os }}-web-build-${{ github.sha }}
-          restore-keys: |
-            ${{ runner.os }}-web-build-
-      
       - name: Build Web
         run: |
-          flutter build web --release
+          flutter build web --release --no-tree-shake-icons
           cd build/web
           7z a -tzip ../../web-release.zip ./*
       
