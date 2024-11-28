@@ -594,12 +594,13 @@ class _ProductCard extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Expanded(
+                            flex: 2,
                             child: Text(
                               product.title,
                               maxLines: 2,
                               overflow: TextOverflow.ellipsis,
-                              style: TextStyle(
-                                fontSize: 13.sp,
+                              style: const TextStyle(
+                                fontSize: 12,
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
@@ -608,7 +609,7 @@ class _ProductCard extends StatelessWidget {
                           Text(
                             '\$${product.price}',
                             style: TextStyle(
-                              fontSize: 14.sp,
+                              fontSize: 11.sp,
                               fontWeight: FontWeight.w600,
                               color: Theme.of(context).colorScheme.primary,
                             ),
@@ -629,7 +630,7 @@ class _ProductCard extends StatelessWidget {
                             child: Text(
                               product.category.name,
                               style: TextStyle(
-                                fontSize: 11.sp,
+                                fontSize: 9.sp,
                                 color: Theme.of(context)
                                     .colorScheme
                                     .onPrimaryContainer,
