@@ -1,6 +1,9 @@
 # yazdanhaider_Dynamic-App
 
 assignment yazdan haider 21bce10015
+<div align="center">
+<img src="https://readme-typing-svg.herokuapp.com?color=9370DB&size=50&width=600&height=80&lines=Assignment-21BCE10015"/>
+</div>
 
 ![1](https://github.com/user-attachments/assets/fd89963f-c301-4068-89c8-0e47bc9ed14b)
 ![2](https://github.com/user-attachments/assets/a514bb5b-e417-4fa8-a33f-51ba9940d3f1)
@@ -35,3 +38,12 @@ assignment yazdan haider 21bce10015
   - `ui/`: Reusable widgets, common UI components
   - `screens/`: App screens/pages
   - `main.dart`: Entry point of the application.
+
+## Dependencies
+
+- `flutter`: The Flutter SDK.
+- `State Management`: provider, get.
+- `UI`: google_fonts, flutter_svg, cached_network_image.
+- `Network`: http, dio.
+- `Storage`: shared_preferences, sqflite
+- `Utils`: intl, url_launcher, image_picker.
