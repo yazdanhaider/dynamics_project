@@ -10,6 +10,7 @@ import 'package:http/http.dart' as http;
 import 'package:shimmer/shimmer.dart';
 import '../../controllers/cart_provider.dart';
 import '../../data/models/product_model.dart';
+import '../../ui/screens/cart_screen.dart';
 
 class DetailScreen extends StatefulWidget {
   final Product product;
@@ -98,19 +99,11 @@ class _DetailScreenState extends State<DetailScreen>
                                     : null,
                               ),
                               onPressed: () {
-                                cart.addItem(widget.product);
-                                Fluttertoast.showToast(
-                                  msg: isInCart
-                                      ? 'Quantity increased'
-                                      : 'Added to cart',
-                                  toastLength: Toast.LENGTH_SHORT,
-                                  gravity: ToastGravity.BOTTOM,
-                                  backgroundColor: Theme.of(context)
-                                      .colorScheme
-                                      .primaryContainer,
-                                  textColor: Theme.of(context)
-                                      .colorScheme
-                                      .onPrimaryContainer,
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => const CartScreen(),
+                                  ),
                                 );
                               },
                             ),
